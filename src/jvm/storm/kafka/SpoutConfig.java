@@ -16,4 +16,11 @@ public class SpoutConfig extends KafkaConfig implements Serializable {
         this.zkRoot = zkRoot;
         this.id = id;
     }
+
+    public SpoutConfig(BrokerHosts hosts, String topic, String zkRoot, String id, String clientId) {
+        super(hosts, topic, clientId);
+        this.zkRoot = zkRoot;
+        this.id = id;
+    }
+
 }
