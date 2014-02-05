@@ -64,7 +64,13 @@ public class PartitionManager {
         String path = committedPath();
         try {
             Map<Object, Object> json = _state.readJSON(path);
-            LOG.info("Read partition information from: " + path +  "  --> " + json );
+            LOG.info("Read partition information from: " + path + "  --> " + json);
+            if (json == null) {
+                //Fallback on previous version zk node naming
+                path = committedPathForPreviousVersion();
+                json = _state.readJSON(path);
+                LOG.info("Fallback to previous version path. Read partition information from: " + path + "  --> " + json);
+            }
             if (json != null) {
                 jsonTopologyId = (String) ((Map<Object, Object>) json.get("topology")).get("id");
                 jsonOffset = (Long) json.get("offset");
@@ -81,7 +87,7 @@ public class PartitionManager {
             LOG.info("Topology change detected and reset from start forced, using configuration to determine offset");
         } else {
             _committedTo = jsonOffset;
-            LOG.info("Read last commit offset from zookeeper: " + _committedTo + "; old topology_id: " + jsonTopologyId + " - new topology_id: " + topologyInstanceId );
+            LOG.info("Read last commit offset from zookeeper: " + _committedTo + "; old topology_id: " + jsonTopologyId + " - new topology_id: " + topologyInstanceId);
         }
 
         LOG.info("Starting Kafka " + _consumer.host() + ":" + id.partition + " from offset " + _committedTo);
@@ -203,6 +209,10 @@ public class PartitionManager {
 
     private String committedPath() {
         return _spoutConfig.zkRoot + "/" + _spoutConfig.id + "/" + _partition.getId();
+    }
+
+    private String committedPathForPreviousVersion() {
+        return _spoutConfig.zkRoot + "/" + _spoutConfig.id + "/" + _partition;
     }
 
     public long queryPartitionOffsetLatestTime() {
